@@ -20,7 +20,8 @@ import java.util.UUID;
  * constructor injection so the service can be unit tested with any adapter.</p>
  */
 @Service
-public class BoardApplicationService {
+public class
+BoardApplicationService {
 
     private final BoardRepository repository;
 
