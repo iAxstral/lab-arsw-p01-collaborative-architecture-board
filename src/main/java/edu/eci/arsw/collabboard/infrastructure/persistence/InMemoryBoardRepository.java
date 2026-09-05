@@ -8,6 +8,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * In-memory adapter for {@link BoardRepository}.
+ *
+ * <p>Semantics of {@link #save(Board)}: the board id is the primary key and
+ * the operation is an upsert. Creation and replacement therefore share the
+ * same adapter operation, and it is the application service — not the
+ * adapter — that decides whether a missing board is an error.</p>
+ *
+ * <p>Defensive copying is not required here: {@link Board} is an immutable
+ * record whose compact constructor already runs {@code List.copyOf} over its
+ * elements, so neither the caller nor the map can mutate stored state.</p>
+ */
 @Repository
 public class InMemoryBoardRepository implements BoardRepository {
 
@@ -21,19 +33,15 @@ public class InMemoryBoardRepository implements BoardRepository {
 
     @Override
     public Board save(Board board) {
-        // TODO LAB-04: decide and document the semantics of save/replace.
         boards.put(board.id(), board);
         return board;
     }
 
     @Override
     public Optional<Board> findById(String boardId) {
-        // TODO LAB-04: validate whether defensive copying is necessary with the current immutable model.
+        if (boardId == null) {
+            return Optional.empty();
+        }
         return Optional.ofNullable(boards.get(boardId));
-    }
-
-    @Override
-    public boolean existsById(String boardId) {
-        return boards.containsKey(boardId);
     }
 }
