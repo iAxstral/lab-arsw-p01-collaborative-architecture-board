@@ -13,14 +13,32 @@ Base path: `/api/boards`
 ```json
 {
   "id": "string, required, unique within the board",
-  "type": "RECTANGLE | TEXT",
+  "type": "RECTANGLE | TEXT | CONNECTOR",
   "x": "number",
   "y": "number",
   "width": "number, >= 0",
   "height": "number, >= 0",
-  "text": "string, optional (defaults to empty string)"
+  "text": "string, optional (defaults to empty string)",
+  "sourceId": "string, required only when type is CONNECTOR",
+  "targetId": "string, required only when type is CONNECTOR"
 }
 ```
+
+### `CONNECTOR` elements
+
+A `CONNECTOR` does not render as a shape; it represents a line between two
+other elements already present in the same `elements` list.
+
+| Field | Rule |
+|---|---|
+| `sourceId` | Required. Must match the `id` of another element in the same board |
+| `targetId` | Required. Must match the `id` of another element in the same board, and be different from `sourceId` |
+| `x`, `y`, `width`, `height`, `text` | Not used to render a connector; accepted as `0`/`""` |
+
+A `CONNECTOR` referencing a `sourceId`/`targetId` that is missing from the
+submitted `elements`, or with `sourceId == targetId`, fails as a domain
+invariant — same `400 INVALID_INPUT` error contract as any other element
+invariant violation, and nothing is persisted.
 
 ### Notes on semantics
 
@@ -42,6 +60,10 @@ Base path: `/api/boards`
   deserialized into `BoardElement`, before the controller method runs. It is
   still reported as `400 INVALID_INPUT` with the original invariant message
   (see error contract below), not as a generic malformed-body error.
+- `CONNECTOR` elements are validated at the `Board` level, not per-element:
+  the check runs against the full `elements` list being submitted, so a
+  connector can reference another element created in the very same `PUT`
+  request.
 
 ## Error contract
 
