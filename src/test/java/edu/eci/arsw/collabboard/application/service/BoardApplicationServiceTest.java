@@ -61,7 +61,7 @@ class BoardApplicationServiceTest {
     @Test
     void shouldReplaceContentKeepingTheSameIdentity() {
         Board created = service.createBoard("Draft");
-        BoardElement element = new BoardElement("e1", ElementType.RECTANGLE, 10, 20, 100, 50, "");
+        BoardElement element = new BoardElement("e1", ElementType.RECTANGLE, 10, 20, 100, 50, "", null, null);
 
         Board replaced = service.replaceBoard(created.id(), "Final", List.of(element));
 
@@ -82,8 +82,8 @@ class BoardApplicationServiceTest {
     @Test
     void shouldRejectDuplicatedElementIds() {
         Board created = service.createBoard("Draft");
-        BoardElement one = new BoardElement("e1", ElementType.RECTANGLE, 0, 0, 10, 10, "");
-        BoardElement duplicated = new BoardElement("e1", ElementType.TEXT, 5, 5, 10, 10, "hello");
+        BoardElement one = new BoardElement("e1", ElementType.RECTANGLE, 0, 0, 10, 10, "", null, null);
+        BoardElement duplicated = new BoardElement("e1", ElementType.TEXT, 5, 5, 10, 10, "hello", null, null);
 
         IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
                 () -> service.replaceBoard(created.id(), "Draft", List.of(one, duplicated)));
