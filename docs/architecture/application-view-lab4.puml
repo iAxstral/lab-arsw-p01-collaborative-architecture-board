@@ -1,0 +1,20 @@
+@startuml application-view-lab4
+!include <archimate/Archimate>
+
+title Application View - Lab 04 (base view, no web client yet)
+
+Application_Component(restController, "Board REST Controller", "BoardRestController")
+Application_Interface(restInterface, "REST Interface", "/api/boards")
+Application_Component(appService, "Board Application Service", "BoardApplicationService")
+Application_Interface(repoPort, "Board Repository", "port: BoardRepository")
+Application_Component(inMemoryRepo, "InMemoryBoardRepository", "in-memory adapter")
+Application_DataObject(boardData, "Board", "domain aggregate")
+
+Rel_Realization(restController, restInterface)
+Rel_Serving(appService, restController)
+Rel_Serving(repoPort, appService)
+Rel_Realization(inMemoryRepo, repoPort)
+Rel_Access(inMemoryRepo, boardData, "stores / reads")
+
+caption Elements and relationships match the Lab 04 backend only: BoardRestController realizes\nthe REST Interface, BoardApplicationService is served by the BoardRepository port, and\nInMemoryBoardRepository is the only realization of that port (see docs/ADR-001-repository-boundary.md).
+@enduml
