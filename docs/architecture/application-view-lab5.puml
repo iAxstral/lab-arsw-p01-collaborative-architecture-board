@@ -1,0 +1,28 @@
+@startuml application-view-lab5
+!include <archimate/Archimate>
+
+title Application View - Lab 05 (evolution of application-view-lab4.puml)
+
+Application_Component(restController, "Board REST Controller", "BoardRestController")
+Application_Interface(restInterface, "REST Interface", "/api/boards")
+Application_Component(appService, "Board Application Service", "BoardApplicationService")
+Application_Interface(repoPort, "Board Repository", "port: BoardRepository")
+Application_Component(inMemoryRepo, "InMemoryBoardRepository", "in-memory adapter")
+Application_DataObject(boardData, "Board", "domain aggregate")
+
+Rel_Realization(restController, restInterface)
+Rel_Serving(appService, restController)
+Rel_Serving(repoPort, appService)
+Rel_Realization(inMemoryRepo, repoPort)
+Rel_Access(inMemoryRepo, boardData, "stores / reads")
+
+Application_Component(webClient, "Web Client", "app.js orchestrator")
+Application_Component(apiClient, "BoardApiClient", "board-api-client.js")
+Application_Component(boardView, "BoardView", "board-view.js")
+
+Rel_Serving(restInterface, apiClient, "HTTP / JSON")
+Rel_Serving(apiClient, webClient, "create / load / save")
+Rel_Serving(boardView, webClient, "render(snapshot, hint)")
+
+caption This view EXTENDS application-view-lab4.puml, it does not replace it: every Lab 04\nelement/relationship above is unchanged. Only Web Client, BoardApiClient and BoardView\nare new, and BoardApiClient is the only new element wired to REST Interface - BoardView\nnever talks to it directly (it only renders state and emits callbacks to Web Client / app.js).
+@enduml
