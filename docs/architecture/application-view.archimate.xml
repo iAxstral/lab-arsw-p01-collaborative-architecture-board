@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ArchiMate Open Exchange Format. Import in Archi: File > Import > Open Exchange XML Model. -->
+<model xmlns="http://www.opengroup.org/xsd/archimate/3.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.opengroup.org/xsd/archimate/3.0/ http://www.opengroup.org/xsd/archimate/3.1/archimate3_Diagram.xsd"
+       identifier="id-model">
+  <name xml:lang="en">Collaborative Board — Application View (Lab 05)</name>
+  <elements>
+    <element identifier="id-user" xsi:type="BusinessActor"><name xml:lang="en">Board user</name></element>
+    <element identifier="id-browser" xsi:type="Node"><name xml:lang="en">Web browser</name></element>
+    <element identifier="id-boardapp" xsi:type="ApplicationComponent"><name xml:lang="en">BoardApp</name></element>
+    <element identifier="id-state" xsi:type="ApplicationComponent"><name xml:lang="en">BoardState</name></element>
+    <element identifier="id-view" xsi:type="ApplicationComponent"><name xml:lang="en">BoardView (SVG)</name></element>
+    <element identifier="id-client" xsi:type="ApplicationComponent"><name xml:lang="en">BoardApiClient</name></element>
+    <element identifier="id-rest" xsi:type="ApplicationInterface"><name xml:lang="en">Board REST API (/api/boards)</name></element>
+    <element identifier="id-controller" xsi:type="ApplicationComponent"><name xml:lang="en">BoardRestController</name></element>
+    <element identifier="id-service" xsi:type="ApplicationComponent"><name xml:lang="en">BoardApplicationService</name></element>
+    <element identifier="id-repo" xsi:type="ApplicationComponent"><name xml:lang="en">InMemoryBoardRepository</name></element>
+    <element identifier="id-board" xsi:type="DataObject"><name xml:lang="en">Board / BoardElement</name></element>
+    <element identifier="id-edit" xsi:type="ApplicationService"><name xml:lang="en">Edit board (add, move, connect, delete)</name></element>
+    <element identifier="id-persist" xsi:type="ApplicationService"><name xml:lang="en">Create / load / save board</name></element>
+  </elements>
+  <relationships>
+    <relationship identifier="r1" xsi:type="Serving" source="id-edit" target="id-user"/>
+    <relationship identifier="r2" xsi:type="Serving" source="id-persist" target="id-user"/>
+    <relationship identifier="r3" xsi:type="Realization" source="id-boardapp" target="id-edit"/>
+    <relationship identifier="r4" xsi:type="Realization" source="id-boardapp" target="id-persist"/>
+    <relationship identifier="r5" xsi:type="Flow" source="id-view" target="id-boardapp"><name xml:lang="en">gesture events</name></relationship>
+    <relationship identifier="r6" xsi:type="Serving" source="id-state" target="id-boardapp"/>
+    <relationship identifier="r7" xsi:type="Flow" source="id-state" target="id-view"><name xml:lang="en">snapshot</name></relationship>
+    <relationship identifier="r8" xsi:type="Serving" source="id-client" target="id-boardapp"/>
+    <relationship identifier="r9" xsi:type="Serving" source="id-rest" target="id-client"/>
+    <relationship identifier="r10" xsi:type="Assignment" source="id-controller" target="id-rest"/>
+    <relationship identifier="r11" xsi:type="Serving" source="id-service" target="id-controller"/>
+    <relationship identifier="r12" xsi:type="Serving" source="id-repo" target="id-service"/>
+    <relationship identifier="r13" xsi:type="Access" source="id-state" target="id-board" accessType="ReadWrite"/>
+    <relationship identifier="r14" xsi:type="Access" source="id-repo" target="id-board" accessType="ReadWrite"/>
+    <relationship identifier="r15" xsi:type="Assignment" source="id-browser" target="id-boardapp"/>
+  </relationships>
+  <views>
+    <diagrams>
+      <view identifier="v1" xsi:type="Diagram">
+        <name xml:lang="en">Application View — Lab 05</name>
+        <node identifier="n-user" elementRef="id-user" xsi:type="Element" x="40" y="20" w="140" h="55"/>
+        <node identifier="n-edit" elementRef="id-edit" xsi:type="Element" x="220" y="20" w="200" h="55"/>
+        <node identifier="n-persist" elementRef="id-persist" xsi:type="Element" x="460" y="20" w="200" h="55"/>
+        <node identifier="n-browser" elementRef="id-browser" xsi:type="Element" x="20" y="110" w="700" h="230">
+          <node identifier="n-view" elementRef="id-view" xsi:type="Element" x="20" y="120" w="150" h="55"/>
+          <node identifier="n-app" elementRef="id-boardapp" xsi:type="Element" x="270" y="60" w="150" h="55"/>
+          <node identifier="n-state" elementRef="id-state" xsi:type="Element" x="20" y="30" w="150" h="55"/>
+          <node identifier="n-client" elementRef="id-client" xsi:type="Element" x="520" y="60" w="150" h="55"/>
+        </node>
+        <node identifier="n-rest" elementRef="id-rest" xsi:type="Element" x="470" y="380" w="220" h="55"/>
+        <node identifier="n-ctrl" elementRef="id-controller" xsi:type="Element" x="470" y="470" w="220" h="55"/>
+        <node identifier="n-svc" elementRef="id-service" xsi:type="Element" x="470" y="560" w="220" h="55"/>
+        <node identifier="n-repo" elementRef="id-repo" xsi:type="Element" x="470" y="650" w="220" h="55"/>
+        <node identifier="n-board" elementRef="id-board" xsi:type="Element" x="140" y="650" w="200" h="55"/>
+        <connection identifier="c3" relationshipRef="r3" xsi:type="Relationship" source="n-app" target="n-edit"/>
+        <connection identifier="c4" relationshipRef="r4" xsi:type="Relationship" source="n-app" target="n-persist"/>
+        <connection identifier="c1" relationshipRef="r1" xsi:type="Relationship" source="n-edit" target="n-user"/>
+        <connection identifier="c2" relationshipRef="r2" xsi:type="Relationship" source="n-persist" target="n-user"/>
+        <connection identifier="c5" relationshipRef="r5" xsi:type="Relationship" source="n-view" target="n-app"/>
+        <connection identifier="c6" relationshipRef="r6" xsi:type="Relationship" source="n-state" target="n-app"/>
+        <connection identifier="c7" relationshipRef="r7" xsi:type="Relationship" source="n-state" target="n-view"/>
+        <connection identifier="c8" relationshipRef="r8" xsi:type="Relationship" source="n-client" target="n-app"/>
+        <connection identifier="c9" relationshipRef="r9" xsi:type="Relationship" source="n-rest" target="n-client"/>
+        <connection identifier="c10" relationshipRef="r10" xsi:type="Relationship" source="n-ctrl" target="n-rest"/>
+        <connection identifier="c11" relationshipRef="r11" xsi:type="Relationship" source="n-svc" target="n-ctrl"/>
+        <connection identifier="c12" relationshipRef="r12" xsi:type="Relationship" source="n-repo" target="n-svc"/>
+        <connection identifier="c14" relationshipRef="r14" xsi:type="Relationship" source="n-repo" target="n-board"/>
+      </view>
+    </diagrams>
+  </views>
+</model>
