@@ -1,31 +1,11 @@
 package edu.eci.arsw.collabboard.application.service;
-
 import edu.eci.arsw.collabboard.application.exception.BoardNotFoundException;
-import edu.eci.arsw.collabboard.domain.model.Board;
+import edu.eci.arsw.collabboard.domain.model.*;
 import edu.eci.arsw.collabboard.infrastructure.persistence.InMemoryBoardRepository;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-@Disabled("TODO LAB-04: enable progressively while implementing the use cases")
+import org.junit.jupiter.api.Test; import java.util.List;
+import static org.junit.jupiter.api.Assertions.*;
 class BoardApplicationServiceTest {
-
-    private final BoardApplicationService service =
-            new BoardApplicationService(new InMemoryBoardRepository());
-
-    @Test
-    void shouldCreateAndReadBoard() {
-        Board created = service.createBoard("Architecture Session");
-        Board loaded = service.getBoard(created.id());
-
-        assertEquals(created, loaded);
-    }
-
-    @Test
-    void shouldFailWithConcreteExceptionWhenBoardDoesNotExist() {
-        assertThrows(BoardNotFoundException.class,
-                () -> service.getBoard("missing-board"));
-    }
+ private final BoardApplicationService s=new BoardApplicationService(new InMemoryBoardRepository());
+ @Test void createReadReplace(){ Board b=s.createBoard("A"); assertEquals(b,s.getBoard(b.id())); Board r=s.replaceBoard(b.id(),"B",List.of(new BoardElement("e",ElementType.RECTANGLE,10,10,100,50,"API",null,null))); assertEquals("B",r.name()); }
+ @Test void missing(){ assertThrows(BoardNotFoundException.class,()->s.getBoard("missing")); }
 }
