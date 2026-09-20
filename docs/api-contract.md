@@ -1,4 +1,4 @@
-# REST Contract — Lab 04
+# REST Contract — Lab 5
 
 Base path: `/api/boards`
 
