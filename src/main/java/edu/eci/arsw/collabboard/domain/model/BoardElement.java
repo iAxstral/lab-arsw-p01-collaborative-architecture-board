@@ -30,6 +30,16 @@ public record BoardElement(
             if (sourceId.equals(targetId)) {
                 throw new IllegalArgumentException("Connector endpoints must be different");
             }
+        } else {
+            if (hasValue(sourceId) || hasValue(targetId)) {
+                throw new IllegalArgumentException("Only CONNECTOR elements may define sourceId/targetId");
+            }
+            sourceId = null;
+            targetId = null;
         }
+    }
+
+    private static boolean hasValue(String value) {
+        return value != null && !value.isBlank();
     }
 }
