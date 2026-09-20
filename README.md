@@ -94,4 +94,4 @@ connection or by creating/loading another board. This comes from the
 - ArchiMate application view, Lab 04: [PNG](docs/architecture/application-view-lab4.png) · [source](docs/architecture/application-view-lab4.puml)
 - ArchiMate application view, Lab 05: [PNG](docs/architecture/application-view-lab5.png) · [source](docs/architecture/application-view-lab5.puml)
 - Class / module diagram: [class-diagram.md](docs/architecture/class-diagram.md)
-<!-- PENDING: link the GIF/screenshot of the working client here once it is added to the repo. -->
+- Client demo recording (1:20): [lab5-demo.mp4](docs/evidence/lab5-demo.mp4) — a board loaded, two elements connected, and a change saved and reloaded.
