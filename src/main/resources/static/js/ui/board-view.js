@@ -62,7 +62,8 @@ function statusText(remote) {
  * Pure projection of a board-state snapshot onto the SVG canvas plus the
  * status/retry chrome. Never imports BoardApiClient and never mutates the
  * state it is given — user interaction is only ever reported upward via
- * `handlers`.
+ * `handlers`. `onElementDragEnd(id, x, y)` fires once, when a drag that
+ * actually moved the element is released.
  */
 export function createBoardView(svg, messageEl, retryBtn, handlers) {
   let drag = null;
@@ -71,7 +72,11 @@ export function createBoardView(svg, messageEl, retryBtn, handlers) {
     if (drag && svg.hasPointerCapture?.(event.pointerId)) {
       svg.releasePointerCapture(event.pointerId);
     }
+    const finished = drag;
     drag = null;
+    if (finished?.moved) {
+      handlers.onElementDragEnd(finished.id, finished.x, finished.y);
+    }
   }
 
   svg.addEventListener('pointerdown', (event) => {
@@ -86,6 +91,9 @@ export function createBoardView(svg, messageEl, retryBtn, handlers) {
     const viewBox = svg.viewBox.baseVal;
     const x = clamp(point.x - drag.offsetX, 0, Math.max(0, viewBox.width - drag.width));
     const y = clamp(point.y - drag.offsetY, 0, Math.max(0, viewBox.height - drag.height));
+    drag.moved = true;
+    drag.x = x;
+    drag.y = y;
     handlers.onElementDrag(x, y);
   });
 
@@ -95,6 +103,8 @@ export function createBoardView(svg, messageEl, retryBtn, handlers) {
   function startDrag(element, event) {
     const point = toSvgPoint(svg, event.clientX, event.clientY);
     drag = {
+      id: element.id,
+      moved: false,
       offsetX: point.x - element.x,
       offsetY: point.y - element.y,
       width: element.width,

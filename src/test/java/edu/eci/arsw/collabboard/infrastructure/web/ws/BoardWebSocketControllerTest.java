@@ -233,6 +233,23 @@ class BoardWebSocketControllerTest {
     }
 
     @Test
+    void subscriberOfAnotherBoardDoesNotReceiveTheEvent() throws Exception {
+        Board boardA = newBoard();
+        Board boardB = newBoard();
+        StompSession subscriberA = connect();
+        StompSession subscriberB = connect();
+        StompSession sender = connect();
+        BlockingQueue<String> queueA = subscribe(subscriberA, boardA.id());
+        BlockingQueue<String> queueB = subscribe(subscriberB, boardB.id());
+
+        send(sender, boardA.id(), event("evt-a", boardA.id(), "ELEMENT_CREATED", created("r1")));
+
+        assertEquals("evt-a", next(queueA).get("eventId").asText());
+        assertNull(queueB.poll(500, TimeUnit.MILLISECONDS), "a subscriber of board B must not see board A events");
+        assertTrue(repository.findById(boardB.id()).orElseThrow().elements().isEmpty());
+    }
+
+    @Test
     void eventForAnUnknownBoardIsNotBroadcast() throws Exception {
         Board board = newBoard();
         StompSession session = connect();

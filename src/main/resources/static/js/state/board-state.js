@@ -8,10 +8,55 @@ export function createBoardState() {
   let connectSourceId = null;
   let remote = { status: 'idle', lastAction: null, error: null };
 
+  function snapshot() {
+    return structuredClone({ board, selectedId, connectSourceId, remote });
+  }
+
+  function hasElement(id) {
+    return board.elements.some(e => e.id === id);
+  }
+
+  function isValidElement(element) {
+    return Boolean(element) && typeof element.id === 'string' && element.id !== '';
+  }
+
+  function addRemoteElement(element) {
+    if (!isValidElement(element) || hasElement(element.id)) return;
+    board = { ...board, elements: [...board.elements, structuredClone(element)] };
+  }
+
+  function moveRemoteElement(elementId, x, y) {
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    board = {
+      ...board,
+      elements: board.elements.map(e =>
+        e.id === elementId && e.type !== 'CONNECTOR' ? { ...e, x, y } : e
+      )
+    };
+  }
+
+  function replaceRemoteElement(element) {
+    if (!isValidElement(element) || !hasElement(element.id)) return;
+    board = {
+      ...board,
+      elements: board.elements.map(e => e.id === element.id ? structuredClone(element) : e)
+    };
+  }
+
+  function removeRemoteElement(elementId) {
+    if (!hasElement(elementId)) return;
+    const removedIds = new Set(
+      board.elements
+        .filter(e => e.id === elementId || e.sourceId === elementId || e.targetId === elementId)
+        .map(e => e.id)
+    );
+    board = { ...board, elements: board.elements.filter(e => !removedIds.has(e.id)) };
+    if (removedIds.has(selectedId)) selectedId = null;
+    if (removedIds.has(connectSourceId)) connectSourceId = null;
+  }
+
   return {
-    snapshot() {
-      return structuredClone({ board, selectedId, connectSourceId, remote });
-    },
+    snapshot,
     setBoard(next) {
       board = structuredClone(next);
       selectedId = null;
@@ -76,6 +121,28 @@ export function createBoardState() {
         elements: board.elements.filter(e => e.id !== removed && e.sourceId !== removed && e.targetId !== removed)
       };
       selectedId = null;
+    },
+    applyEvent(event) {
+      if (!board.id || event?.boardId !== board.id) return snapshot();
+      const payload = event.payload ?? {};
+      switch (event.type) {
+        case 'ELEMENT_CREATED':
+        case 'CONNECTOR_CREATED':
+          addRemoteElement(payload.element);
+          break;
+        case 'ELEMENT_MOVED':
+          moveRemoteElement(payload.elementId, payload.x, payload.y);
+          break;
+        case 'ELEMENT_UPDATED':
+          replaceRemoteElement(payload.element);
+          break;
+        case 'ELEMENT_DELETED':
+          removeRemoteElement(payload.elementId);
+          break;
+        default:
+          break;
+      }
+      return snapshot();
     },
     toPersistedBoard() {
       return structuredClone(board);

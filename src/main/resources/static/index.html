@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ARSW Collaborative Board</title>
     <link rel="stylesheet" href="css/app.css">
+    <script src="/webjars/stomp-websocket/2.3.4/stomp.min.js"></script>
 </head>
 <body>
 <header>
@@ -22,6 +23,13 @@
 
     <button id="saveBtn" type="button">Save</button>
     <button id="retryBtn" type="button" hidden>Retry</button>
+</section>
+
+<section class="live-bar">
+    <button id="connectLiveBtn" type="button" disabled>Connect live</button>
+    <button id="disconnectLiveBtn" type="button" disabled>Disconnect</button>
+    <span>LIVE: <strong id="liveStatus" data-status="disconnected" aria-live="polite">disconnected</strong></span>
+    <span>Actor: <code id="actorId"></code></span>
 </section>
 
 <section class="toolbar">
