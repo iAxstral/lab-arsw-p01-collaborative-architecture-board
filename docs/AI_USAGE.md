@@ -27,3 +27,21 @@ mvn test
 ```
 
 Result at the time of submission: 19 tests, 0 failures, 0 errors.
+
+---
+
+## Lab 5 — Interactive Board
+
+**Herramienta:** Claude Code (asistente de IA en la terminal).
+**Tests al cierre del laboratorio:** 33, todos en verde.
+
+| Entregable | Actividad y propósito | Resultado | Validación del equipo | Modificaciones del equipo |
+|---|---|---|---|---|
+| Backend CONNECTOR (`Board`, `BoardElement`) | Apoyo para extender el dominio (records inmutables) sin romper las invariantes existentes, y para decidir dónde vivía la validación de `sourceId`/`targetId` (`BoardElement` vs. `Board`) | `ElementType.CONNECTOR`, campos `sourceId`/`targetId` y validación de referencias en `Board` | `mvn test` después de cada cambio | Aplicamos las reglas de la sección 4 del enunciado (obligatorios, distintos, referencian elementos existentes en el mismo `Board`). Un test quedó en `src/main` en vez de `src/test`; lo detectamos por el log de compilación y lo movimos a mano |
+| Tests (33) | Apoyo para adaptar los tests existentes a la nueva firma de `BoardElement` sin perder cobertura y para estructurar los casos de CONNECTOR | Suite de 33 tests, con casos de conector válido, referencia inexistente, extremos iguales, conector hacia otro conector y `sourceId` en un rectángulo | Corrimos `mvn test` nosotros mismos y confirmamos los 33 en verde antes de cerrar cada parte | Decidimos qué escenarios de conector cubrir |
+| Cliente JS (api-client, state, view, app) | Apoyo para construir los 4 módulos siguiendo la arquitectura objetivo del enunciado (`BoardApp` → `BoardApiClient` + `BoardState` + `BoardView`) y para mantener el estado inmutable de forma consistente | Cuatro módulos ES Modules con SVG nativo | Probamos el flujo completo en navegador real (crear, cargar, agregar, mover, conectar, eliminar, guardar, recargar, error/retry) y verificamos con búsqueda de texto que `fetch` solo exista en `board-api-client.js` | El enunciado indicaba una ruta incorrecta para `index.html`; se corrigió a `static/index.html` |
+| ADR-002 | Claude Code redactó el ADR a partir del código y de la separación de módulos planteada en la sección 3 del enunciado | `docs/ADR-002-client-boundaries.md` | Nosotros lo revisamos y verificamos que el trade-off (modo "connect" sin cancelación) fuera una limitación real del código | — |
+| ArchiMate `.puml` (Lab 4 y Lab 5) | Aclarar la sintaxis de PlantUML/ArchiMate, que no conocíamos, para representar la vista de aplicación | `application-view-lab4.puml` y `application-view-lab5.puml` | Confirmamos que los diagramas compilaran y que las relaciones correspondieran al código real | Corregimos que fuera `BoardApiClient` y no `BoardView` quien se conecta a la API, porque la vista no hace peticiones HTTP |
+| `class-diagram.md` | Apoyo para estructurar el diagrama en sintaxis Mermaid | `docs/architecture/class-diagram.md` | Confirmamos que la sintaxis renderizara bien | Decidimos qué clases/módulos incluir para explicar dependencias sin hacer un inventario del código |
+| Hardening de backend y cliente (PR 1 y 2) | Claude Code implementó las reglas de CONNECTOR (rechazo de conector hacia otro conector y de `sourceId`/`targetId` en elementos que no son conector), los tests HTTP, el bloqueo del canvas mientras hay una petición en curso y el guard de `parse()` para respuestas 2xx sin JSON válido | Cambios en `Board`, `BoardElement`, `app.js`, `app.css` y `board-api-client.js`; 11 tests nuevos | `mvn test` y revisión del diff por el equipo | — |
+| Prueba manual end-to-end | No se usó IA | Flujo completo verificado | Ejecutamos nosotros, en navegador, crear, cargar, agregar, mover, conectar, eliminar (incluido un elemento con un conector asociado), guardar, recargar y error/retry | — |
