@@ -171,6 +171,73 @@ class BoardRestControllerTest {
                 .andExpect(jsonPath("$.message").value(containsString("dimensions")));
     }
 
+    private static String connectorPayload(String... connectors) {
+        return """
+                {
+                  "name": "Connected",
+                  "elements": [
+                    {"id":"a","type":"RECTANGLE","x":0,"y":0,"width":10,"height":10,"text":""},
+                    {"id":"b","type":"TEXT","x":50,"y":0,"width":10,"height":10,"text":"b"}%s
+                  ]
+                }
+                """.formatted(connectors.length == 0 ? "" : "," + String.join(",", connectors));
+    }
+
+    @Test
+    void shouldReplaceBoardWithValidConnector() throws Exception {
+        String boardId = createBoard("Draft");
+
+        mockMvc.perform(put("/api/boards/{boardId}", boardId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(connectorPayload(
+                                "{\"id\":\"c\",\"type\":\"CONNECTOR\",\"x\":0,\"y\":0,\"width\":0,\"height\":0,\"text\":\"\",\"sourceId\":\"a\",\"targetId\":\"b\"}")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.elements.length()").value(3))
+                .andExpect(jsonPath("$.elements[2].type").value("CONNECTOR"))
+                .andExpect(jsonPath("$.elements[2].sourceId").value("a"))
+                .andExpect(jsonPath("$.elements[2].targetId").value("b"));
+    }
+
+    @Test
+    void shouldRejectConnectorWithMissingTarget() throws Exception {
+        String boardId = createBoard("Draft");
+
+        mockMvc.perform(put("/api/boards/{boardId}", boardId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(connectorPayload(
+                                "{\"id\":\"c\",\"type\":\"CONNECTOR\",\"x\":0,\"y\":0,\"width\":0,\"height\":0,\"text\":\"\",\"sourceId\":\"a\",\"targetId\":\"missing\"}")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
+                .andExpect(jsonPath("$.message").value(containsString("missing")));
+    }
+
+    @Test
+    void shouldRejectConnectorWithSameSourceAndTarget() throws Exception {
+        String boardId = createBoard("Draft");
+
+        mockMvc.perform(put("/api/boards/{boardId}", boardId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(connectorPayload(
+                                "{\"id\":\"c\",\"type\":\"CONNECTOR\",\"x\":0,\"y\":0,\"width\":0,\"height\":0,\"text\":\"\",\"sourceId\":\"a\",\"targetId\":\"a\"}")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
+                .andExpect(jsonPath("$.message").value(containsString("different")));
+    }
+
+    @Test
+    void shouldRejectConnectorPointingToAnotherConnector() throws Exception {
+        String boardId = createBoard("Draft");
+
+        mockMvc.perform(put("/api/boards/{boardId}", boardId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(connectorPayload(
+                                "{\"id\":\"c1\",\"type\":\"CONNECTOR\",\"x\":0,\"y\":0,\"width\":0,\"height\":0,\"text\":\"\",\"sourceId\":\"a\",\"targetId\":\"b\"}",
+                                "{\"id\":\"c2\",\"type\":\"CONNECTOR\",\"x\":0,\"y\":0,\"width\":0,\"height\":0,\"text\":\"\",\"sourceId\":\"a\",\"targetId\":\"c1\"}")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
+                .andExpect(jsonPath("$.message").value(containsString("another connector")));
+    }
+
     @Test
     void shouldReturnNotFoundWhenReplacingUnknownBoard() throws Exception {
         mockMvc.perform(put("/api/boards/{boardId}", "missing-board")
