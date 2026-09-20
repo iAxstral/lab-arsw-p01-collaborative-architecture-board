@@ -27,3 +27,20 @@ mvn test
 ```
 
 Result at the time of submission: 19 tests, 0 failures, 0 errors.
+
+---
+
+## Lab 5 — Interactive Board
+
+**Herramienta:** Claude Code (asistente de IA en la terminal).
+**Tests al cierre del laboratorio:** 22, todos en verde.
+
+| Entregable | Actividad y propósito | Resultado | Validación del equipo | Modificaciones del equipo |
+|---|---|---|---|---|
+| Backend CONNECTOR (`Board`, `BoardElement`) | Apoyo para extender el dominio (records inmutables) sin romper las invariantes existentes, y para decidir dónde vivía la validación de `sourceId`/`targetId` (`BoardElement` vs. `Board`) | `ElementType.CONNECTOR`, campos `sourceId`/`targetId` y validación de referencias en `Board` | `mvn test` después de cada cambio | Aplicamos las reglas de la sección 4 del enunciado (obligatorios, distintos, referencian elementos existentes en el mismo `Board`). Un test quedó en `src/main` en vez de `src/test`; lo detectamos por el log de compilación y lo movimos a mano |
+| Tests (22) | Apoyo para adaptar los tests existentes a la nueva firma de `BoardElement` sin perder cobertura y para estructurar los casos de CONNECTOR | Suite de 22 tests, con casos de conector válido, referencia inexistente y extremos iguales | Corrimos `mvn test` nosotros mismos y confirmamos los 22 en verde antes de cerrar cada parte | Decidimos qué escenarios de conector cubrir |
+| Cliente JS (api-client, state, view, app) | Apoyo para construir los 4 módulos siguiendo la arquitectura objetivo del enunciado (`BoardApp` → `BoardApiClient` + `BoardState` + `BoardView`) y para mantener el estado inmutable de forma consistente | Cuatro módulos ES Modules con SVG nativo | Probamos el flujo completo en navegador real (crear, agregar, mover, conectar, eliminar, guardar, recargar) y verificamos con búsqueda de texto que `fetch` solo exista en `board-api-client.js` | Corregimos una ruta incorrecta en el `index.html` del starter |
+| ADR-002 | Ayuda para dar formato ADR (Contexto/Decisión/Consecuencias/Trade-off/Evidencia) a una decisión de separación de módulos que ya habíamos tomado | `docs/ADR-002-client-boundaries.md` | Revisamos que el trade-off (modo "connect" sin cancelación) fuera una limitación real del código y no una descripción genérica | — |
+| ArchiMate `.puml` (Lab 4 y Lab 5) | Aclarar la sintaxis de PlantUML/ArchiMate, que no conocíamos, para representar la vista de aplicación | `application-view-lab4.puml` y `application-view-lab5.puml` | Confirmamos que los diagramas compilaran y que las relaciones correspondieran al código real | Corregimos que fuera `BoardApiClient` y no `BoardView` quien se conecta a la API, porque la vista no hace peticiones HTTP |
+| `class-diagram.md` | Apoyo para estructurar el diagrama en sintaxis Mermaid | `docs/architecture/class-diagram.md` | Confirmamos que la sintaxis renderizara bien | Decidimos qué clases/módulos incluir para explicar dependencias sin hacer un inventario del código |
+| Prueba manual end-to-end | No se usó IA | Flujo completo verificado | Ejecutamos nosotros, en navegador, crear, cargar, agregar, mover, conectar, eliminar, guardar/recargar y error/retry | — |
