@@ -15,6 +15,9 @@ async function parse(response) {
       payload?.message ?? `HTTP ${response.status}`
     );
   }
+  if (payload === null) {
+    throw new BoardApiError(response.status, 'INVALID_RESPONSE', 'The server returned an invalid response');
+  }
   return payload;
 }
 
