@@ -86,6 +86,30 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.live-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 24px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+#liveStatus[data-status="connected"] {
+  color: var(--success);
+}
+
+#liveStatus[data-status="connecting"] {
+  color: var(--accent);
+}
+
+#liveStatus[data-status="error"] {
+  color: var(--danger);
+}
+
 #retryBtn {
   border-color: var(--danger);
   color: var(--danger);
