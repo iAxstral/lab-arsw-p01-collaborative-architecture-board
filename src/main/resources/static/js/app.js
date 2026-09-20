@@ -48,7 +48,9 @@ function setButtonsDisabled(disabled) {
 
 function renderAll(hint = null) {
   const snapshot = state.snapshot();
-  setButtonsDisabled(snapshot.remote.status === 'loading');
+  const loading = snapshot.remote.status === 'loading';
+  setButtonsDisabled(loading);
+  els.canvas.classList.toggle('busy', loading);
   view.render(snapshot, hint);
 }
 
