@@ -134,6 +134,11 @@ main {
   touch-action: none;
 }
 
+#boardCanvas.busy {
+  pointer-events: none;
+  opacity: .6;
+}
+
 .board-element {
   cursor: grab;
 }

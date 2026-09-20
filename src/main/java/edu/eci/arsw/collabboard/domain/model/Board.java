@@ -1,8 +1,8 @@
 package edu.eci.arsw.collabboard.domain.model;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 public record Board(String id, String name, List<BoardElement> elements) {
     public Board {
@@ -14,19 +14,27 @@ public record Board(String id, String name, List<BoardElement> elements) {
         }
         elements = elements == null ? List.of() : List.copyOf(elements);
 
-        Set<String> elementIds = new HashSet<>();
+        Map<String, ElementType> typesById = new HashMap<>();
         for (BoardElement element : elements) {
-            elementIds.add(element.id());
+            typesById.put(element.id(), element.type());
         }
         for (BoardElement element : elements) {
             if (element.type() == ElementType.CONNECTOR) {
-                if (!elementIds.contains(element.sourceId())) {
+                if (!typesById.containsKey(element.sourceId())) {
                     throw new IllegalArgumentException(
                             "Connector references missing source element: " + element.sourceId());
                 }
-                if (!elementIds.contains(element.targetId())) {
+                if (!typesById.containsKey(element.targetId())) {
                     throw new IllegalArgumentException(
                             "Connector references missing target element: " + element.targetId());
+                }
+                if (typesById.get(element.sourceId()) == ElementType.CONNECTOR) {
+                    throw new IllegalArgumentException(
+                            "Connector source cannot be another connector: " + element.sourceId());
+                }
+                if (typesById.get(element.targetId()) == ElementType.CONNECTOR) {
+                    throw new IllegalArgumentException(
+                            "Connector target cannot be another connector: " + element.targetId());
                 }
             }
         }
