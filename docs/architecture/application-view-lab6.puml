@@ -1,0 +1,46 @@
+@startuml application-view-lab6
+!include <archimate/Archimate>
+
+title Application View - Lab 06 (evolution of application-view-lab5.puml)
+
+Application_Component(restController, "Board REST Controller", "BoardRestController")
+Application_Interface(restInterface, "REST Interface", "/api/boards")
+Application_Component(appService, "Board Application Service", "BoardApplicationService")
+Application_Interface(repoPort, "Board Repository", "port: BoardRepository")
+Application_Component(inMemoryRepo, "InMemoryBoardRepository", "in-memory adapter")
+Application_DataObject(boardData, "Board", "domain aggregate")
+
+Rel_Realization(restController, restInterface)
+Rel_Serving(appService, restController)
+Rel_Serving(repoPort, appService)
+Rel_Realization(inMemoryRepo, repoPort)
+Rel_Access(inMemoryRepo, boardData, "stores / reads")
+
+Application_Component(webClient, "Web Client", "app.js orchestrator")
+Application_Component(apiClient, "BoardApiClient", "board-api-client.js")
+Application_Component(boardView, "BoardView", "board-view.js")
+
+Rel_Serving(restInterface, apiClient, "HTTP / JSON")
+Rel_Serving(apiClient, webClient, "create / load / save")
+Rel_Serving(boardView, webClient, "render(snapshot, hint)")
+
+Application_Interface(wsInterface, "WebSocket/STOMP Interface", "/ws endpoint, /app prefix, /topic broker")
+Application_Component(wsController, "Board WebSocket Controller", "BoardWebSocketController")
+Application_Component(eventService, "Board Event Application Service", "BoardEventApplicationService")
+Application_DataObject(boardEvent, "BoardEvent", "collaboration contract (envelope + payload)")
+Application_Component(boardState, "BoardState", "board-state.js (applyEvent)")
+Application_Component(realtimeClient, "BoardRealtimeClient", "realtime/board-realtime-client.js")
+
+Rel_Realization(wsController, wsInterface)
+Rel_Serving(eventService, wsController, "apply(event)")
+Rel_Serving(repoPort, eventService, "reuses the same port as the REST path")
+Rel_Access(eventService, boardEvent, "validates / normalizes")
+Rel_Access(wsController, boardEvent, "receives (SEND) / publishes (BROADCAST)")
+
+Rel_Serving(wsInterface, realtimeClient, "connect / subscribe / SEND / BROADCAST")
+Rel_Serving(realtimeClient, webClient, "connect / publish(event) / onEvent(event)")
+Rel_Serving(webClient, boardState, "applyEvent(event) after a remote BROADCAST")
+Rel_Triggering(boardState, boardView, "re-render from the updated snapshot")
+
+caption This view EXTENDS application-view-lab5.puml, it does not replace it: every Lab 04/05\nelement/relationship above is unchanged. Lab 06 adds a second, parallel entry point\n(WebSocket/STOMP) that reuses the same BoardRepository port and the same Board aggregate\nas the REST path - it does not introduce a second source of truth. BoardRealtimeClient is\nthe only client element wired to the WebSocket/STOMP Interface, mirroring how BoardApiClient\nis the only one wired to the REST Interface: BoardView still never talks to either transport\ndirectly, it only re-renders from BoardState.
+@enduml
