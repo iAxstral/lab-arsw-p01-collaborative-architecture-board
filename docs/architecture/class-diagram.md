@@ -1,11 +1,12 @@
 # Class / Module Diagram
 
 Renders natively on GitHub. Scope is limited to what explains the real
-dependencies between layers (backend Lab 04 + client Lab 05) — not a full
-class inventory. Getters/setters, Spring annotations, DTO validation
-annotations and private helpers are intentionally omitted; see
-`docs/ADR-001-repository-boundary.md` and `docs/ADR-002-client-boundaries.md`
-for the reasoning behind each boundary shown here.
+dependencies between layers (backend Lab 04 + client Lab 05 + real-time
+Lab 06) — not a full class inventory. Getters/setters, Spring annotations,
+DTO validation annotations and private helpers are intentionally omitted;
+see `docs/ADR-001-repository-boundary.md`, `docs/ADR-002-client-boundaries.md`
+and `docs/ADR-003-rest-vs-realtime.md` for the reasoning behind each boundary
+shown here.
 
 ```mermaid
 classDiagram
@@ -119,6 +120,84 @@ classDiagram
     AppJs ..> BoardApiError : instanceof (error message + code)
     AppJs ..> BoardState : mutates + snapshot()
     AppJs ..> BoardView : render(snapshot, hint)
+
+    %% --- Lab 06: real-time collaboration ---
+
+    class BoardEventType {
+        <<enumeration>>
+        ELEMENT_CREATED
+        ELEMENT_MOVED
+        ELEMENT_UPDATED
+        ELEMENT_DELETED
+        CONNECTOR_CREATED
+    }
+
+    class BoardEventPayload {
+        <<record>>
+        +BoardElement element
+        +String elementId
+        +Double x
+        +Double y
+    }
+
+    class BoardEvent {
+        <<record>>
+        +String eventId
+        +String boardId
+        +BoardEventType type
+        +String actorId
+        +Instant occurredAt
+        +BoardEventPayload payload
+    }
+
+    class BoardEventApplicationService {
+        +apply(BoardEvent event) BoardEvent
+    }
+
+    class BoardWebSocketController {
+        +handle(String boardId, BoardEvent event) void
+        +onRejectedEvent(Exception exception) void
+    }
+
+    class WebSocketConfig {
+        <<config>>
+        +configureMessageBroker(MessageBrokerRegistry registry) void
+        +registerStompEndpoints(StompEndpointRegistry registry) void
+    }
+
+    BoardEvent *-- BoardEventPayload : carries
+    BoardEvent --> BoardEventType : type
+    BoardEventApplicationService ..> BoardEvent : validates / applies
+    BoardEventApplicationService ..> BoardRepository : depends on (same port as REST)
+    BoardEventApplicationService ..> Board : loads / saves
+    BoardEventApplicationService ..> BoardElement : applies the same invariants
+    BoardWebSocketController ..> BoardEventApplicationService : apply(event)
+    BoardWebSocketController ..> BoardEvent : SEND /app/boards/{boardId}/events\nBROADCAST /topic/boards/{boardId}
+    WebSocketConfig ..> BoardWebSocketController : enables @MessageMapping routing
+
+    class BoardEvents {
+        <<module: events/board-event.js>>
+        +elementCreated(boardId, actorId, element) BoardEvent
+        +connectorCreated(boardId, actorId, element) BoardEvent
+        +elementMoved(boardId, actorId, elementId, x, y) BoardEvent
+        +elementUpdated(boardId, actorId, element) BoardEvent
+        +elementDeleted(boardId, actorId, elementId) BoardEvent
+    }
+
+    class BoardRealtimeClient {
+        <<module: realtime/board-realtime-client.js>>
+        +connect(boardId) Promise
+        +publish(event) void
+        +disconnect() Promise
+        +isConnected() boolean
+        +boardId() String
+    }
+
+    BoardRealtimeClient ..> BoardWebSocketController : STOMP over WebSocket ws://.../ws
+    BoardEvents ..> AppJs : builds the event a local action publishes
+    AppJs ..> BoardRealtimeClient : connect / publish(event) / onEvent callback
+    AppJs ..> BoardEvents : elementCreated / elementMoved / ...
+    BoardState ..> BoardEvent : applyEvent(event) — remote transition
 ```
 
 ## Reading notes
@@ -140,3 +219,30 @@ classDiagram
   `handleConnectClick`, `handleElementDrag`, `handleCanvasPointerDown`,
   `handleRenameChange`) all follow the same `state.*()` → `renderAll()`
   shape already covered by the `AppJs ..> BoardState` relationship.
+- `BoardEventApplicationService` depends on the **same** `BoardRepository`
+  port `BoardApplicationService` depends on, and enforces the **same**
+  `Board`/`BoardElement` invariants — it is a second entry point into the
+  same domain, not a parallel one. This is the point of
+  `docs/ADR-003-rest-vs-realtime.md`.
+- `BoardWebSocketController` mirrors `BoardRestController`: both are thin
+  adapters that call an application service and translate the result to
+  their own protocol. Neither one calls the other, and neither one contains
+  domain rules.
+- `BoardRealtimeClient` is the WebSocket/STOMP analogue of `BoardApiClient`:
+  it is the only client module that touches `window.Stomp`/`WebSocket`, the
+  only one wired to the WebSocket/STOMP interface, and `AppJs` is the only
+  module that imports it — `BoardView` and `BoardState` have no relationship
+  to it, matching how they have none to `BoardApiClient`.
+- `BoardState.applyEvent` is a **pure state transition**: it turns an
+  accepted, already-validated `BoardEvent` into a new `board` snapshot (add,
+  move, replace or remove an element) with no DOM access. `AppJs` is still
+  the only module that calls `renderAll()` afterwards — the STOMP callback
+  in `BoardRealtimeClient` never touches the SVG directly, it only invokes
+  `onEvent`, which `AppJs` wires to `state.applyEvent(event)` then
+  `renderAll()`.
+- Client-authored events go the other way: `AppJs` builds a `BoardEvent` with
+  `BoardEvents.*` **after** it already applied the change locally through
+  `BoardState` (optimistic local update), then calls
+  `BoardRealtimeClient.publish(event)`. If the socket is not connected,
+  `AppJs` simply skips the publish — collaboration degrades to a
+  single-tab Lab 05 experience instead of failing the local edit.
